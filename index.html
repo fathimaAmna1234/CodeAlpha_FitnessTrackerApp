@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness Tracker App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root[data-theme="dark"] {
+      --bg: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.1);
+      --text: #ffffff;
+      --sub: rgba(255,255,255,0.45);
+      --input-bg: rgba(255,255,255,0.07);
+      --item-bg: rgba(255,255,255,0.04);
+    }
+    :root[data-theme="light"] {
+      --bg: linear-gradient(135deg,#e0f7fa,#e8f5e9,#fff9c4);
+      --card: rgba(255,255,255,0.85);
+      --border: rgba(0,0,0,0.1);
+      --text: #1a1a2e;
+      --sub: rgba(0,0,0,0.45);
+      --input-bg: rgba(0,0,0,0.04);
+      --item-bg: rgba(255,255,255,0.7);
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{min-height:100vh;background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);padding:20px;transition:background 0.4s;}
+
+    /* Header */
+    .header{display:flex;justify-content:space-between;align-items:center;max-width:780px;margin:0 auto 5px;}
+    h1{color:#00b4d8;font-size:1.6rem;letter-spacing:2px;text-transform:uppercase;}
+    .btn-theme{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;transition:0.3s;}
+    .subtitle{text-align:center;color:var(--sub);font-size:0.78rem;margin-bottom:20px;}
+
+    /* Date */
+    .date-bar{max-width:780px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+    .date-bar input[type="date"]{padding:7px 12px;border-radius:20px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-size:0.82rem;outline:none;}
+    .date-label{color:var(--sub);font-size:0.82rem;}
+
+    /* Goal Cards */
+    .goal-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;max-width:780px;margin:0 auto 20px;}
+    .goal-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;position:relative;overflow:hidden;}
+    .goal-card .icon{font-size:2rem;margin-bottom:6px;}
+    .goal-card .val{font-size:1.6rem;font-weight:700;}
+    .goal-card .lbl{font-size:0.72rem;color:var(--sub);margin-top:2px;}
+    .goal-card .goal-lbl{font-size:0.68rem;color:var(--sub);margin-top:4px;}
+    .goal-bar{height:5px;background:rgba(255,255,255,0.1);border-radius:10px;margin-top:8px;overflow:hidden;}
+    .goal-fill{height:100%;border-radius:10px;transition:width 0.5s;}
+    .steps-fill{background:linear-gradient(90deg,#00b4d8,#0077b6);}
+    .cal-fill{background:linear-gradient(90deg,#f77f00,#d62828);}
+    .water-fill{background:linear-gradient(90deg,#4cc9f0,#4361ee);}
+    .workout-fill{background:linear-gradient(90deg,#06d6a0,#1b9aaa);}
+    .sleep-fill{background:linear-gradient(90deg,#7209b7,#b5179e);}
+
+    /* Section Title */
+    .sec-title{max-width:780px;margin:0 auto 12px;color:#00b4d8;font-size:0.95rem;font-weight:700;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center;}
+
+    /* Log Form */
+    .form-section{max-width:780px;margin:0 auto 20px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px;}
+    .form-group label{display:block;font-size:0.75rem;color:var(--sub);margin-bottom:4px;}
+    .form-group input,.form-group select{width:100%;padding:9px 12px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.85rem;outline:none;font-family:inherit;transition:border 0.3s;}
+    .form-group input:focus,.form-group select:focus{border-color:#00b4d8;}
+    .form-btns{display:flex;gap:8px;flex-wrap:wrap;}
+
+    button{padding:10px 20px;border:none;border-radius:50px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.3s;}
+    .btn-log{background:#00b4d8;color:#fff;}
+    .btn-log:hover{background:#0096c7;transform:translateY(-2px);}
+    .btn-clear{background:transparent;color:#aaa;border:2px solid #aaa;}
+    .btn-clear:hover{background:#aaa;color:#1a1a2e;}
+
+    /* Activity Log */
+    .log-section{max-width:780px;margin:0 auto 20px;}
+    .log-item{background:var(--item-bg);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .log-left{flex:1;}
+    .log-type{font-size:0.9rem;font-weight:600;color:var(--text);}
+    .log-details{font-size:0.75rem;color:var(--sub);margin-top:3px;}
+    .log-time{font-size:0.72rem;color:var(--sub);}
+    .btn-del{background:transparent;color:#e94560;border:1px solid #e94560;padding:5px 11px;font-size:0.72rem;border-radius:20px;}
+    .btn-del:hover{background:#e94560;color:#fff;}
+    .empty-log{text-align:center;color:var(--sub);font-size:0.82rem;padding:20px;}
+
+    /* Chart */
+    .chart-section{max-width:780px;margin:0 auto 20px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+    .chart-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+    .chart-tab{padding:7px 16px;border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;background:var(--input-bg);border:1px solid var(--border);color:var(--sub);transition:0.3s;}
+    .chart-tab.active{background:#00b4d8;color:#fff;border-color:#00b4d8;}
+    canvas{max-height:250px;}
+
+    /* Weekly Summary */
+    .summary-section{max-width:780px;margin:0 auto 20px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+    .summary-item{background:var(--item-bg);border-radius:12px;padding:14px;text-align:center;}
+    .summary-item .s-val{font-size:1.3rem;font-weight:700;color:#00b4d8;}
+    .summary-item .s-lbl{font-size:0.72rem;color:var(--sub);margin-top:3px;}
+
+    /* Motivational */
+    .motivation{max-width:780px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(0,180,216,0.15),rgba(0,119,182,0.1));border:1px solid rgba(0,180,216,0.3);border-radius:16px;padding:18px;text-align:center;}
+    .motivation p{font-size:0.95rem;font-style:italic;color:var(--text);}
+    .motivation span{font-size:0.78rem;color:#00b4d8;font-weight:600;}
+
+    .msg{text-align:center;color:#06d6a0;font-size:0.8rem;height:18px;max-width:780px;margin:0 auto 8px;}
+    .footer{text-align:center;color:var(--sub);font-size:0.7rem;padding:15px 0 8px;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>💪 Fitness Tracker</h1>
+  <button class="btn-theme" onclick="toggleTheme()">🌙 Dark / ☀️ Light</button>
+</div>
+<p class="subtitle">CodeAlpha Internship — App Development | Amanulla Fathima Amna</p>
+
+<!-- Date Bar -->
+<div class="date-bar">
+  <span class="date-label" id="dateLabel">📅 Today: --</span>
+  <input type="date" id="datePicker" onchange="changeDate()"/>
+</div>
+
+<!-- Goal Cards -->
+<div class="goal-cards">
+  <div class="goal-card">
+    <div class="icon">👟</div>
+    <div class="val" id="stepsVal">0</div>
+    <div class="lbl">Steps</div>
+    <div class="goal-lbl">Goal: 10,000</div>
+    <div class="goal-bar"><div class="goal-fill steps-fill" id="stepsFill" style="width:0%"></div></div>
+  </div>
+  <div class="goal-card">
+    <div class="icon">🔥</div>
+    <div class="val" id="calVal">0</div>
+    <div class="lbl">Calories Burned</div>
+    <div class="goal-lbl">Goal: 500 kcal</div>
+    <div class="goal-bar"><div class="goal-fill cal-fill" id="calFill" style="width:0%"></div></div>
+  </div>
+  <div class="goal-card">
+    <div class="icon">💧</div>
+    <div class="val" id="waterVal">0</div>
+    <div class="lbl">Water (glasses)</div>
+    <div class="goal-lbl">Goal: 8 glasses</div>
+    <div class="goal-bar"><div class="goal-fill water-fill" id="waterFill" style="width:0%"></div></div>
+  </div>
+  <div class="goal-card">
+    <div class="icon">🏋️</div>
+    <div class="val" id="workoutVal">0</div>
+    <div class="lbl">Workout (mins)</div>
+    <div class="goal-lbl">Goal: 45 mins</div>
+    <div class="goal-bar"><div class="goal-fill workout-fill" id="workoutFill" style="width:0%"></div></div>
+  </div>
+  <div class="goal-card">
+    <div class="icon">😴</div>
+    <div class="val" id="sleepVal">0</div>
+    <div class="lbl">Sleep (hrs)</div>
+    <div class="goal-lbl">Goal: 8 hrs</div>
+    <div class="goal-bar"><div class="goal-fill sleep-fill" id="sleepFill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- Motivation -->
+<div class="motivation">
+  <p id="motivationText">"The secret of getting ahead is getting started."</p>
+  <span>— Mark Twain</span>
+</div>
+
+<!-- Log Form -->
+<div class="sec-title"><span>📝 Log Activity</span></div>
+<div class="form-section">
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Activity Type</label>
+      <select id="actType" onchange="updateFields()">
+        <option value="steps">👟 Steps</option>
+        <option value="calories">🔥 Calories Burned</option>
+        <option value="water">💧 Water Intake</option>
+        <option value="workout">🏋️ Workout</option>
+        <option value="sleep">😴 Sleep</option>
+        <option value="running">🏃 Running</option>
+        <option value="cycling">🚴 Cycling</option>
+        <option value="yoga">🧘 Yoga</option>
+        <option value="swimming">🏊 Swimming</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label id="amountLabel">Amount</label>
+      <input type="number" id="actAmount" placeholder="Enter amount" min="0"/>
+    </div>
+    <div class="form-group">
+      <label id="unitLabel">Unit</label>
+      <input type="text" id="actUnit" placeholder="steps" readonly/>
+    </div>
+    <div class="form-group">
+      <label>Note (optional)</label>
+      <input type="text" id="actNote" placeholder="e.g. Morning walk"/>
+    </div>
+  </div>
+  <div class="form-btns">
+    <button class="btn-log" onclick="logActivity()">➕ Log Activity</button>
+    <button class="btn-clear" onclick="clearForm()">✖ Clear</button>
+  </div>
+</div>
+
+<p class="msg" id="msg"></p>
+
+<!-- Activity Log -->
+<div class="sec-title"><span>📋 Today's Activities</span><span id="logCount" style="color:var(--sub);font-size:0.78rem"></span></div>
+<div class="log-section" id="logSection">
+  <div class="empty-log">No activities logged yet. Start tracking! 💪</div>
+</div>
+
+<!-- Chart -->
+<div class="sec-title"><span>📊 Weekly Progress</span></div>
+<div class="chart-section">
+  <div class="chart-tabs">
+    <button class="chart-tab active" onclick="switchChart('steps',this)">👟 Steps</button>
+    <button class="chart-tab" onclick="switchChart('calories',this)">🔥 Calories</button>
+    <button class="chart-tab" onclick="switchChart('water',this)">💧 Water</button>
+    <button class="chart-tab" onclick="switchChart('workout',this)">🏋️ Workout</button>
+    <button class="chart-tab" onclick="switchChart('sleep',this)">😴 Sleep</button>
+  </div>
+  <canvas id="weeklyChart"></canvas>
+</div>
+
+<!-- Weekly Summary -->
+<div class="sec-title"><span>📈 Weekly Summary</span></div>
+<div class="summary-section">
+  <div class="summary-grid">
+    <div class="summary-item"><div class="s-val" id="wSteps">0</div><div class="s-lbl">Total Steps</div></div>
+    <div class="summary-item"><div class="s-val" id="wCal">0</div><div class="s-lbl">Calories Burned</div></div>
+    <div class="summary-item"><div class="s-val" id="wWater">0</div><div class="s-lbl">Water Glasses</div></div>
+    <div class="summary-item"><div class="s-val" id="wWorkout">0</div><div class="s-lbl">Workout Mins</div></div>
+    <div class="summary-item"><div class="s-val" id="wSleep">0</div><div class="s-lbl">Avg Sleep (hrs)</div></div>
+    <div class="summary-item"><div class="s-val" id="wActivities">0</div><div class="s-lbl">Total Activities</div></div>
+  </div>
+</div>
+
+<div class="footer">CodeAlpha Internship — App Development | Amanulla Fathima Amna</div>
+
+<script>
+  // ── Data ──
+  let data = {};
+  let selectedDate = getTodayStr();
+  let chart = null;
+  let currentChartType = 'steps';
+
+  const motivations = [
+    {text:"The secret of getting ahead is getting started.", author:"Mark Twain"},
+    {text:"Take care of your body. It's the only place you have to live.", author:"Jim Rohn"},
+    {text:"Fitness is not about being better than someone else. It's about being better than you used to be.", author:"Unknown"},
+    {text:"The only bad workout is the one that didn't happen.", author:"Unknown"},
+    {text:"Your body can stand almost anything. It's your mind that you have to convince.", author:"Unknown"},
+    {text:"Push yourself because no one else is going to do it for you.", author:"Unknown"},
+    {text:"Success usually comes to those who are too busy to be looking for it.", author:"Henry David Thoreau"},
+  ];
+
+  const unitMap = {
+    steps:'steps', calories:'kcal', water:'glasses',
+    workout:'mins', sleep:'hrs', running:'mins',
+    cycling:'mins', yoga:'mins', swimming:'mins'
+  };
+
+  const goalMap = { steps:10000, calories:500, water:8, workout:45, sleep:8 };
+
+  function getTodayStr() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function init() {
+    selectedDate = getTodayStr();
+    document.getElementById('datePicker').value = selectedDate;
+    document.getElementById('dateLabel').textContent = '📅 Today: ' + new Date().toDateString();
+    // Seed some sample data for weekly chart
+    const days = getLast7Days();
+    days.forEach((d,i) => {
+      if (!data[d]) data[d] = [];
+      if (i < 6) {
+        data[d].push({type:'steps',amount:Math.floor(3000+Math.random()*8000),unit:'steps',note:'',time:''});
+        data[d].push({type:'calories',amount:Math.floor(200+Math.random()*400),unit:'kcal',note:'',time:''});
+        data[d].push({type:'water',amount:Math.floor(4+Math.random()*5),unit:'glasses',note:'',time:''});
+        data[d].push({type:'workout',amount:Math.floor(20+Math.random()*40),unit:'mins',note:'',time:''});
+        data[d].push({type:'sleep',amount:Math.floor(5+Math.random()*4),unit:'hrs',note:'',time:''});
+      }
+    });
+    updateFields();
+    renderMotivation();
+    render();
+    buildChart('steps');
+    updateWeeklySummary();
+  }
+
+  function renderMotivation() {
+    const m = motivations[Math.floor(Math.random()*motivations.length)];
+    document.getElementById('motivationText').textContent = '"' + m.text + '"';
+    document.querySelector('.motivation span').textContent = '— ' + m.author;
+  }
+
+  function changeDate() {
+    selectedDate = document.getElementById('datePicker').value;
+    document.getElementById('dateLabel').textContent = '📅 ' + new Date(selectedDate+'T00:00:00').toDateString();
+    render();
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme')==='dark'?'light':'dark');
+    setTimeout(() => { if(chart) { chart.destroy(); buildChart(currentChartType); } }, 300);
+  }
+
+  // ── Form ──
+  function updateFields() {
+    const type = document.getElementById('actType').value;
+    document.getElementById('actUnit').value = unitMap[type] || 'units';
+    document.getElementById('amountLabel').textContent = 'Amount (' + (unitMap[type]||'units') + ')';
+    document.getElementById('actAmount').placeholder = 'Enter ' + (unitMap[type]||'units');
+  }
+
+  function clearForm() {
+    document.getElementById('actAmount').value='';
+    document.getElementById('actNote').value='';
+  }
+
+  function logActivity() {
+    const type   = document.getElementById('actType').value;
+    const amount = parseFloat(document.getElementById('actAmount').value);
+    const unit   = document.getElementById('actUnit').value;
+    const note   = document.getElementById('actNote').value.trim();
+    if (!amount || amount<=0) { showMsg('⚠️ Please enter a valid amount!'); return; }
+    if (!data[selectedDate]) data[selectedDate] = [];
+    const now = new Date();
+    data[selectedDate].push({
+      type, amount, unit, note,
+      time: now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')
+    });
+    clearForm();
+    render();
+    buildChart(currentChartType);
+    updateWeeklySummary();
+    showMsg('✅ Activity logged successfully!');
+  }
+
+  // ── Render ──
+  function render() {
+    const entries = data[selectedDate] || [];
+    updateGoalCards(entries);
+    renderLog(entries);
+  }
+
+  function updateGoalCards(entries) {
+    const sum = (type) => entries.filter(e=>e.type===type||e.type===type).reduce((s,e)=>s+e.amount,0);
+    const steps   = sum('steps');
+    const cal     = sum('calories');
+    const water   = sum('water');
+    const workout = entries.filter(e=>['workout','running','cycling','yoga','swimming'].includes(e.type)).reduce((s,e)=>s+e.amount,0);
+    const sleep   = sum('sleep');
+
+    document.getElementById('stepsVal').textContent   = steps.toLocaleString();
+    document.getElementById('calVal').textContent     = cal;
+    document.getElementById('waterVal').textContent   = water;
+    document.getElementById('workoutVal').textContent = workout;
+    document.getElementById('sleepVal').textContent   = sleep;
+
+    setBar('stepsFill',   steps/goalMap.steps*100);
+    setBar('calFill',     cal/goalMap.calories*100);
+    setBar('waterFill',   water/goalMap.water*100);
+    setBar('workoutFill', workout/goalMap.workout*100);
+    setBar('sleepFill',   sleep/goalMap.sleep*100);
+  }
+
+  function setBar(id, pct) {
+    document.getElementById(id).style.width = Math.min(pct,100)+'%';
+  }
+
+  function renderLog(entries) {
+    const sec = document.getElementById('logSection');
+    document.getElementById('logCount').textContent = entries.length + ' activities';
+    if (!entries.length) {
+      sec.innerHTML = '<div class="empty-log">No activities logged yet. Start tracking! 💪</div>';
+      return;
+    }
+    const icons = {steps:'👟',calories:'🔥',water:'💧',workout:'🏋️',sleep:'😴',running:'🏃',cycling:'🚴',yoga:'🧘',swimming:'🏊'};
+    sec.innerHTML = [...entries].reverse().map((e,ri) => {
+      const i = entries.length-1-ri;
+      return '<div class="log-item">'+
+        '<div class="log-left">'+
+          '<div class="log-type">'+(icons[e.type]||'🏃')+' '+capitalize(e.type)+'</div>'+
+          '<div class="log-details">'+e.amount+' '+e.unit+(e.note?' • '+e.note:'')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span class="log-time">'+(e.time||'--:--')+'</span>'+
+          '<button class="btn-del" onclick="deleteEntry('+i+')">🗑️</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function deleteEntry(i) {
+    data[selectedDate].splice(i,1);
+    render(); buildChart(currentChartType); updateWeeklySummary();
+    showMsg('🗑️ Activity deleted!');
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  // ── Chart ──
+  function getLast7Days() {
+    const days=[];
+    for(let i=6;i>=0;i--) {
+      const d=new Date(); d.setDate(d.getDate()-i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+  }
+
+  function switchChart(type, btn) {
+    currentChartType = type;
+    document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    buildChart(type);
+  }
+
+  function buildChart(type) {
+    const days = getLast7Days();
+    const labels = days.map(d => { const dt=new Date(d+'T00:00:00'); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()]; });
+    const values = days.map(d => {
+      const entries = data[d]||[];
+      if (type==='workout') return entries.filter(e=>['workout','running','cycling','yoga','swimming'].includes(e.type)).reduce((s,e)=>s+e.amount,0);
+      return entries.filter(e=>e.type===type).reduce((s,e)=>s+e.amount,0);
+    });
+
+    const colorMap = {
+      steps:['rgba(0,180,216,0.8)','rgba(0,180,216,0.2)'],
+      calories:['rgba(247,127,0,0.8)','rgba(247,127,0,0.2)'],
+      water:['rgba(76,201,240,0.8)','rgba(76,201,240,0.2)'],
+      workout:['rgba(6,214,160,0.8)','rgba(6,214,160,0.2)'],
+      sleep:['rgba(114,9,183,0.8)','rgba(114,9,183,0.2)'],
+    };
+
+    const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+    const gridColor = isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.08)';
+    const tickColor = isDark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.5)';
+
+    if (chart) chart.destroy();
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label: capitalize(type),
+          data: values,
+          backgroundColor: colorMap[type]?colorMap[type][0]:'rgba(0,180,216,0.8)',
+          borderRadius:8,
+          borderSkipped:false,
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{display:false} },
+        scales:{
+          x:{ grid:{color:gridColor}, ticks:{color:tickColor} },
+          y:{ grid:{color:gridColor}, ticks:{color:tickColor}, beginAtZero:true }
+        }
+      }
+    });
+  }
+
+  // ── Weekly Summary ──
+  function updateWeeklySummary() {
+    const days = getLast7Days();
+    let steps=0,cal=0,water=0,workout=0,sleep=0,acts=0;
+    days.forEach(d => {
+      const entries = data[d]||[];
+      steps   += entries.filter(e=>e.type==='steps').reduce((s,e)=>s+e.amount,0);
+      cal     += entries.filter(e=>e.type==='calories').reduce((s,e)=>s+e.amount,0);
+      water   += entries.filter(e=>e.type==='water').reduce((s,e)=>s+e.amount,0);
+      workout += entries.filter(e=>['workout','running','cycling','yoga','swimming'].includes(e.type)).reduce((s,e)=>s+e.amount,0);
+      sleep   += entries.filter(e=>e.type==='sleep').reduce((s,e)=>s+e.amount,0);
+      acts    += entries.length;
+    });
+    document.getElementById('wSteps').textContent    = steps.toLocaleString();
+    document.getElementById('wCal').textContent      = cal;
+    document.getElementById('wWater').textContent    = water;
+    document.getElementById('wWorkout').textContent  = workout;
+    document.getElementById('wSleep').textContent    = (sleep/7).toFixed(1);
+    document.getElementById('wActivities').textContent = acts;
+  }
+
+  function showMsg(msg) {
+    const el=document.getElementById('msg');
+    el.textContent=msg;
+    setTimeout(()=>el.textContent='',2500);
+  }
+
+  init();
+</script>
+</body>
+</html>
